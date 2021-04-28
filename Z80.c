@@ -20,7 +20,7 @@
 #include "Tables.h"
 #include "cycles.h"
 
-#include <SDL.h>
+//#include <SDL.h>
 
 /*** Registers ***********************************************/
 /*** Z80 registers and running flag.                       ***/
@@ -585,7 +585,7 @@ void Z80(void)
   int hline;
 */
   CPURunning=1;
-#ifndef __EMSCRIPTEN__
+#ifdef USE_SDL
   for(;;)
 #endif
   {   

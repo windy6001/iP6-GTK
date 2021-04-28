@@ -1,4 +1,3 @@
-#if 0
 /** iP6: PC-6000/6600 series emualtor ************************/
 /**                                                         **/
 /**                          Xconf.c                        **/
@@ -330,6 +329,3 @@ void toggle(Widget w, XtPointer client_data, XtPointer call_data)
   else if(w==waitButton) WaitFlag=1-WaitFlag;
   else if(w==intLacButton) IntLac=1-IntLac;
 }
-
-#endif
-

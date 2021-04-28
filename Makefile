@@ -35,33 +35,22 @@
 # libraries libX11.* and libXext.* are located on your system.
 
 
-# CC      = gcc
-CC = emcc
+
+CC = gcc
 
 # --- DEFINES ---
 DEFINES = -DUNIX -DLSB_FIRST 
 
 # --- CFLAGS ---
-ifeq ($(CC),gcc)
-# --- SDL -------
-CFLAGS = -g -O3 -fomit-frame-pointer -funroll-loops 	`sdl2-config --cflags` ${DEFINES}
-else
-# --- emscripten ---
-CFLAGS = -s USE_SDL=2 --preload-file rom ${DEFINES}
-endif
+CFLAGS = `pkg-config --cflags gtk+-3.0`  ${DEFINES}
 
 
 # --- LDLIBS ---
-# --- SDL ------
-LDLIBS  = 	`sdl2-config --libs`
+LDLIBS  =   `pkg-config --libs gtk+-3.0`
 
-OBJECTS = iP6.o P6.o Z80.o Debug.o Unix.o Refresh.o Sound.o Xconf.o sdl.o
+OBJECTS = iP6.o P6.o Z80.o Debug.o Refresh.o Sound.o gtk3.o
 
-ifeq ($(CC),gcc)
 OUTPUTFILE= iP6
-else
-OUTPUTFILE= iP6.html
-endif
 
 # Make the standard distribution: iP6
 all:	${OUTPUTFILE}	
@@ -82,5 +71,4 @@ Unix.o:		Unix.c P6.h Z80.h Keydef.h
 Refresh.o:	Refresh.c Unix.h
 Sound.o:	Sound.c P6.h
 Debug.o:	Debug.c Z80.h
-Xconf.o:	Xconf.c Xconf.h Xconfdef.h P6.h
-sdl.o:	sdl.c
+gtk3.o:	 	gtk3.c gtk3.h

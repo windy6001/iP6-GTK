@@ -564,15 +564,6 @@ int StartP6(void)
   if(Verbose) printf("OK\nRUNNING ROM CODE...\n");
   ResetZ80();
   
-#ifdef __EMSCRIPTEN__
- printf("set main loop \n");
-  emscripten_set_main_loop(Z80, 60, 1);
-#else
-        Z80();
-#endif
-
-  //if(Verbose) printf("EXITED at PC = %04Xh.\n",A);
-  if(Verbose) printf("EXITED \n");
   return(1);
 }
 

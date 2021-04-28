@@ -12,6 +12,7 @@
 // #include <X11/Xlib.h>
 #include "P6.h"
 #include "Unix.h"
+#include "gtk3.h"
 #define register /**/ 
 
 extern int Width;
@@ -46,7 +47,8 @@ static int sft;
 /* initialisation of these variables */
 static void SetScrVar(int y1,int x1)
 {
-  P=XBuf+(long)(Width*y1+x1)*scale*bitpix/8;
+//  P=XBuf+(long)(Width*y1+x1)*scale*bitpix/8;
+  P=OSD_get_pixel()+(long)(Width*y1+x1)*scale*bitpix/8;
   buf=0;sft=(lsbfirst?0:8);
 }
 
@@ -235,7 +237,8 @@ static void NoIntLac(register byte Y)
   register word linlen;
   
   linlen=Width*bitpix/8;
-  P=XBuf+(long)scale*Y*linlen;
+  //P=XBuf+(long)scale*Y*linlen;
+  P=OSD_get_pixel()+(long)scale*Y*linlen;
   memcpy(P+linlen,P,linlen);
 }
 

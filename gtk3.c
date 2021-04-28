@@ -1,21 +1,374 @@
-//             SDL2
+//             GTK3
 //
 //  modified by Windy
-#if 0
-#include "SDL.h"
+//#include "SDL.h"
 #include "P6.h"
 #include "Unix.h"
+#include "gtk3.h"
+
+#include <stdio.h>
+#include <gtk/gtk.h>
+#include <gdk/gdkkeysyms.h>
+
 #include <stdlib.h>
 #define M5WIDTH 320
 #define M5HEIGHT 200
 
-    
+
+
+
+// ======================================================================================    
+/*
+
+Modified       by windy
+Date           2021/4/29
+
+
+
+画像を書きかえ続けます。その上、メニューが使えます。
+メニューを触っていても、画像の書き換えは継続します。
+*/
+
+#include <stdio.h>
+#include <gtk/gtk.h>
+#include <gdk/gdkkeysyms.h>
+
+#include <stdio.h>
+
+static cairo_surface_t * surface=NULL;
+
+GdkPixbuf *offscreen=NULL; // offscreen
+int        width=640;		// screen width
+int        height=480;		// screen height
+
+GtkWidget *da;            // drawing area
+
+// ******************* init_drawing_area ****************************************
+static gboolean init_drawing_area(GtkWidget *widget , GdkEventConfigure *event, gpointer data) {
+
+	offscreen = gdk_pixbuf_new( GDK_COLORSPACE_RGB, FALSE, 8, width ,height);
+	if( offscreen ==NULL)
+		{
+		 g_print("Error Create GdkPixbuf \n");
+		 exit(1);
+		}
+	
+	int n_ch = gdk_pixbuf_get_n_channels( offscreen);
+	int row  = gdk_pixbuf_get_rowstride( offscreen);
+
+	//g_print("n_ch=%d  row=%d \n",n_ch , row);
+	/* guchar *pixels;
+	for(int h =0 ; h< height ; h++)
+		{
+		for(int w=0; w<width ; w++)
+			{
+			 	pixels = gdk_pixbuf_get_pixels(offscreen)+h*row+ w *n_ch;
+				pixels[0] = rand()%255;			// random color pixels
+				pixels[1] = rand()%255;
+				pixels[2] = rand()%255;
+			}
+		}*/
+
+	//surface = cairo_image_surface_create( CAIRO_FORMAT_RGB24 , width ,height);
+	surface = cairo_image_surface_create( CAIRO_FORMAT_ARGB32 , width ,height);
+	cairo_t *cr = cairo_create(surface);
+
+	gdk_cairo_set_source_pixbuf( cr, offscreen ,0,0);
+	cairo_paint(cr);
+	cairo_destroy(cr);
+
+	return TRUE;
+}
+
+// ****************** draw callback *************************************
+static gboolean draw_cb( GtkWidget *widget, cairo_t * cr , gpointer data)
+{
+
+	cairo_set_source_surface( cr, surface,0,0);
+	cairo_paint(cr);
+
+   printf("draw_cb\n");
+	return FALSE;
+}
+
+// ****************** OSD_get_pixel *************************************
+// エミュレータのビットマップ作成ルーチンに、オフスクリーンのポインターを知らせる
+byte *OSD_get_pixel(void)
+{
+  byte *p = gdk_pixbuf_get_pixels(offscreen);
+  return p;
+}
+
+// ****************** timer callback *************************************
+// 約1/60秒毎に呼び出される。まず、Z80 CPUを一画面分実行してから、生成されたビットマップを画面に描画する
+//static gboolean timer_func(gpointer user_data)
+static gboolean timer_func(GtkWidget *widget)
+{
+  static gint cnt = 0;
+
+  if( offscreen ==NULL)
+   {
+  		return FALSE;
+  }
+
+ Z80();   // Z80 CPU 
+
+ srand( time(NULL));
+
+  g_print("progress(sec.):%2d\n", cnt++);
+
+	int n_ch = gdk_pixbuf_get_n_channels( offscreen);
+	int row  = gdk_pixbuf_get_rowstride( offscreen);
+
+	g_print("n_ch=%d  row=%d \n",n_ch , row);
+	guchar *pixels;
+
+	/*for(int h =0 ; h< height ; h++)
+		{
+		for(int w=0; w<width ; w++)
+			{
+			 	pixels = gdk_pixbuf_get_pixels(offscreen)+h*row+ w *n_ch;
+				pixels[0] = rand()%255;			// random color pixels
+				pixels[1] = rand()%255;
+				pixels[2] = rand()%255;
+			}
+		} */
+
+	cairo_t *cr = cairo_create(surface);			//  offscreen -> drawing area		
+	gdk_cairo_set_source_pixbuf( cr, offscreen ,0,0);
+	cairo_paint(cr);
+	cairo_destroy(cr);
+
+  gtk_widget_queue_draw(da);				// fire draw event
+  
+  return (TRUE);
+}
+
+
+// ****************** close window *************************************
+static void close_window(void)
+{
+	if(surface) 
+		{
+		cairo_surface_destroy( surface);
+		}
+	gtk_main_quit();
+}
+
+
+
+
+
+// 下記は、michinari-nukazawa さんのメニュープログラムです。
+// https://blog.michinari-nukazawa.com/2015/12/gtk3-menubar-example.html
+
+
+
+
+// gcc main_menu.c -Wall $(pkg-config --cflags --libs gtk+-3.0) -o main_menu && ./main_menu
+/** @brief Menu example of gtk3 application.
+ *
+// “Mnemonics” (ex. "(F)ile > (Q)uit"), “Accelerators”(ex. "Ctrl+Q")
+//
+// michinari.nukazawa@gmail.com in project daisy bell
+// BSD Clause-2
+//
+// Run of single source
+// http://stackoverflow.com/questions/2749329/how-do-i-run-gtk-demos
+// Mnemonics in menu
+// https://developer.gnome.org/gtk3/stable/GtkMenuItem.html#gtk-menu-item-set-use-underline
+// Accel
+// https://developer.gnome.org/gtk3/stable/GtkAccelLabel.html#gtk-accel-label-set-accel
+// https://mail.gnome.org/archives/commits-list/2015-April/msg06114.html
+// https://developer.gnome.org/gtk3/stable/gtk3-Keyboard-Accelerators.html
+// https://developer.gnome.org/gtk3/stable/GtkAccelLabel.html
+**/
+
+
+void cb_show_about_dialog (GtkMenuItem *menuitem, gpointer user_data)
+{   
+    const char *appname = "Menu example";
+    GtkWindow *parent_window = NULL;
+    GtkDialogFlags flags = GTK_DIALOG_DESTROY_WITH_PARENT;
+    GtkWidget *dialog = gtk_message_dialog_new (parent_window,
+                                     flags,
+                                     GTK_MESSAGE_QUESTION,
+                                     GTK_BUTTONS_CLOSE,
+                                     "This is :'%s'",
+                                     appname);
+    gtk_dialog_run (GTK_DIALOG (dialog));
+    gtk_widget_destroy (dialog);
+}
+
+GtkWidget *pv_get_menuitem_new_tree_of_export()
+{
+    GtkWidget *menuitem_root;
+    GtkWidget *menuitem;
+    GtkWidget *menu;
+
+    menuitem_root = gtk_menu_item_new_with_label ("Export");
+
+    menu = gtk_menu_new ();
+    gtk_menu_item_set_submenu (GTK_MENU_ITEM (menuitem_root), menu);
+
+    menuitem = gtk_menu_item_new_with_label ("jpeg/png");
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu), menuitem);
+    menuitem = gtk_menu_item_new_with_label ("svg");
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu), menuitem);
+
+    return menuitem_root;   
+}
+
+GtkWidget *pv_get_menuitem_new_tree_of_file(){
+    GtkWidget *menuitem_root;
+    GtkWidget *menuitem;
+    GtkWidget *menu;
+
+    menuitem_root = gtk_menu_item_new_with_label ("_File");
+    gtk_menu_item_set_use_underline (GTK_MENU_ITEM (menuitem_root), TRUE);
+
+    menu = gtk_menu_new ();
+    gtk_menu_item_set_submenu (GTK_MENU_ITEM (menuitem_root), menu);
+
+    menuitem = gtk_menu_item_new_with_label ("Open");
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu), menuitem);
+    menuitem = gtk_menu_item_new_with_label ("Save");
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu), menuitem);
+    menuitem = gtk_menu_item_new_with_label ("Save As");
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu), menuitem);
+    menuitem = pv_get_menuitem_new_tree_of_export();
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu), menuitem);
+    menuitem = gtk_menu_item_new_with_label ("Quit");
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu), menuitem);
+
+    g_signal_connect(menuitem, "activate", G_CALLBACK(gtk_main_quit), NULL);
+
+    return menuitem_root;
+}
+
+GtkWidget *pv_get_menuitem_new_tree_of_help(GtkWidget *window){
+    GtkWidget *menuitem_root;
+    GtkWidget *menuitem;
+    GtkWidget *menu;
+
+    menuitem_root = gtk_menu_item_new_with_mnemonic ("_Help");
+    // gtk_menu_item_set_use_underline (GTK_MENU_ITEM (menuitem_root), TRUE);
+
+    menu = gtk_menu_new ();
+    gtk_menu_item_set_submenu (GTK_MENU_ITEM (menuitem_root), menu);
+
+    // ** Issue: Mnemonic not works on submenu in Ubuntu15.10(cause Unity/Ubuntu?).
+    menuitem = gtk_menu_item_new_with_mnemonic ("_About");
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu), menuitem);
+
+    g_signal_connect(menuitem, "activate", G_CALLBACK(cb_show_about_dialog), NULL);
+
+    // ** Accel to "Help > About (Ctrl+A)"
+    GtkAccelGroup *accel_group;
+    accel_group = gtk_accel_group_new ();
+    gtk_window_add_accel_group (GTK_WINDOW (window), accel_group);
+    gtk_widget_add_accelerator (menuitem, "activate", accel_group,
+                            GDK_KEY_a, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
+
+    return menuitem_root;
+}
+
+// ************** cb_kicked ************************************
+void cb_kicked (GtkWidget *button, GtkWidget *menubar)
+{
+    // Todo: Append new menu item.
+    g_print("kicked.\n");
+}
+
+// ************** do_menus ************************************
+GtkWidget *do_menus()
+{
+    GtkWidget *window = NULL;
+    GtkWidget *box;
+    GtkWidget *box2;
+    GtkWidget *button;
+
+    GtkWidget *menubar;
+    GtkWidget *menuitem;
+    GtkAccelGroup *accel_group;
+
+    window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title (GTK_WINDOW (window), "Menus");
+    gtk_widget_set_size_request (window, 300,200);
+    gtk_container_set_border_width (GTK_CONTAINER (window), 2);
+    g_signal_connect(window, "delete-event", G_CALLBACK(gtk_main_quit), NULL);
+
+    accel_group = gtk_accel_group_new ();
+    gtk_window_add_accel_group (GTK_WINDOW (window), accel_group);
+
+    box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
+    gtk_container_add (GTK_CONTAINER (window), box);
+
+    menubar = gtk_menu_bar_new ();
+    gtk_box_pack_start (GTK_BOX (box), menubar, FALSE, TRUE, 0);
+
+    menuitem = pv_get_menuitem_new_tree_of_file();
+    gtk_menu_shell_append (GTK_MENU_SHELL (menubar), menuitem);
+
+    menuitem = pv_get_menuitem_new_tree_of_help(window);
+    gtk_menu_shell_append (GTK_MENU_SHELL (menubar), menuitem);
+
+    button = gtk_button_new_with_label ("kick");
+    g_signal_connect (button, "clicked",
+        G_CALLBACK (cb_kicked), menubar);
+    gtk_box_pack_start (GTK_BOX (box), button, TRUE, TRUE, 0);
+
+	da = gtk_drawing_area_new();
+	gtk_widget_set_size_request( da, width ,height);
+    gtk_box_pack_start( GTK_BOX (box), da , FALSE,TRUE , 0);
+
+
+return window;
+}
+
+
+// ************** gtkInit ************************************
+// GTKの初期化、終了時のシグナル、再描画のシグナル、タイマーイベントの設定などをして、全てのウィジットを表示する。
+// この関数を抜けたあと、エミュレータの初期化をしてから、次の関数でGTKのメインループを実行する
+//
+int gtkInit(int argc, char *argv[])
+{
+  GtkWidget *window;
+
+  gtk_init(&argc, &argv);
+  window = do_menus();
+  g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+
+  // create frame
+  GtkWidget *frame = gtk_frame_new(NULL);
+  gtk_container_add( GTK_CONTAINER(window) ,frame);
+
+
+  // event
+  g_signal_connect(da, "draw",G_CALLBACK(draw_cb), NULL);			// re-draw event
+  g_signal_connect(da, "configure-event",G_CALLBACK(init_drawing_area),NULL); // change size event
+   
+  g_timeout_add(1000/60, (GSourceFunc)timer_func, NULL);			// timer event （Z80 の実行や画面の描画など）
+   	
+  gtk_widget_show_all(window);
+
+  return 0;
+}
+
+//***************** GTKのメインループ *********************************
+void OSD_main_loop(void)
+{
+	  gtk_main();
+}
+
+// ======================================================================================
+/*
 SDL_Window *sdlWindow;   // ウインドウ
 SDL_Renderer *sdlRenderer; // レンダラー
 SDL_Texture *sdlTexture;	// テクスチャー
 SDL_Surface * surface;   // サーフェス（オフスクリーン）
 SDL_Palette palet;		// パレット情報
-
+*/
 
 ColTyp BPal[16],BPal11[4],BPal12[8],BPal13[8],BPal14[4],BPal15[8],BPal53[32];
 
@@ -107,12 +460,12 @@ static long psec=0, pusec=0;
 
 void LockSurface(void)
 {
-    SDL_LockSurface( surface);
+  //  SDL_LockSurface( surface);
 }
 
 void UnlockSurface(void)
 {
-    SDL_UnlockSurface( surface);
+  //  SDL_UnlockSurface( surface);
 }
 
 
@@ -120,10 +473,6 @@ void OnBreak(int Arg) { CPURunning=0; }
 
 void unixIdle(void)
 {
- #ifndef __EMSCRIPTEN__
- SDL_Delay(10);
-#endif
-
 #if 0
   long csec, cusec;
   long l;
@@ -158,7 +507,7 @@ void TrashMachine(void)
 int InitMachine(void)
 {
   int K,L;
-  int depth=32 , screen_num;
+  int depth=24 , screen_num;
   //Window root;
   
   SetValidLine( 192);
@@ -173,17 +522,17 @@ int InitMachine(void)
 
 #ifdef SOUND
   if(UseSound) InitSound();
-#endif SOUND
+#endif // SOUND
   Width=M5WIDTH*scale;
   Height=M5HEIGHT*scale;
   
   lsbfirst =0;
-  bitpix= 32;
+  bitpix= 24;
   choosefuncs(lsbfirst,bitpix);
   /*setwidth(wide);*/
   setwidth(scale-1);
 
-
+#if 0
   if(Verbose)
     printf("Initializing SDL drivers:\n    SDL_Init ...");
 
@@ -234,13 +583,13 @@ int InitMachine(void)
         printf("CreateTexture 失敗: %s", SDL_GetError());
         exit(1);    	
     }
-    
+#endif    
     InitColor(screen_num); 		// 色の初期化
-    
+#if 0
     SDL_LockSurface( surface);
-    SDL_memset( surface->pixels , 0 , surface->h *surface->pitch);
+    memset( surface->pixels , 0 , surface->h *surface->pitch);
     SDL_UnlockSurface( surface);
-    
+#endif
   if(Verbose & 1) printf("OK\n");
 
 
@@ -353,6 +702,7 @@ int InitMachine(void)
 /*************************************************************/
 void Keyboard(void)
 {
+#if 0
   SDL_Event e;
    
   //printf("keyboard ");
@@ -468,16 +818,18 @@ void Keyboard(void)
 */
   }
 #endif
+#endif
 }
 
 
 /* Below are the routines related to allocating and deallocating
    colors */
 
+
 /* set up coltable, alind8? etc. */
 void InitColor(int screen_num)
 {
-  SDL_Color colors[32];
+  OSD_Color colors[32];
   XID col;
 //  XColor Color;
   register byte i,j;
@@ -525,7 +877,7 @@ void InitColor(int screen_num)
 	        }*/
         }
     }
-   SDL_SetPaletteColors( &palet ,colors ,0,16);
+  // SDL_SetPaletteColors( &palet ,colors ,0,16);		// 8ビットカラーの場合は、パレット設定が必要？
    
   /* setting color list for each screen mode */
   for(i=0;i<4;i++) BPal11[i] = BPal[ Pal11[i] ];
@@ -555,11 +907,13 @@ void SetTitle(fpos_t pos)
 /** PUTIMAGE: macro copying image buffer into a window ********/
 void PutImage(void)
 {
-	
+	/*
     SDL_UpdateTexture(sdlTexture, NULL, surface->pixels, surface->pitch);
     
     SDL_RenderClear( sdlRenderer );
     SDL_RenderCopy( sdlRenderer, sdlTexture, NULL, NULL);
     SDL_RenderPresent( sdlRenderer ); 
+  */
 }
-#endif
+
+

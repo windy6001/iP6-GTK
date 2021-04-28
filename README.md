@@ -1,61 +1,55 @@
-# iP6 for Emscripten    (PC-6000/6600 Series Emulator) 
+# iP6 GTK   (PC-6000/6600 Series Emulator) 
 
 by windy6001
-First commit: 2020/2/22
+Last Update: 2021/4/29
 
 ## 概要
 
-isio さんの PC-6000/6600 シリーズエミュレータの iP6 を、Unix/X11から、SDL2 に対応した上で、Emscriptenを使用して、ブラウザで動くようにしてみました。
+isio さんの PC-6000/6600 シリーズエミュレータの iP6 を、GTK3 でメニュー付きにしてみました。
 あくまで、コンセプトモデルです。ソースリストがすごいことになっています。正確な処理ができてない部分がありますが、ご容赦ください。
 
-## ビルドの方法 [Emscripten 版]
+## ビルドの方法
 
-Mac mini  (Mojave)でビルドしています。
+macOS Catalina でビルドしました。
+Linuxでもビルドできるかどうかはまだ試してません。
+macOS (home brew) の場合、gtk+3 をインストールしてください。
 
-- Emscripten のビルド環境を作成してください。この辺りを参考にしてください。→（https://emscripten.org/docs/getting_started/downloads.html）
-- ソースリストのディレクトリの下にある rom というサブディレクトリにROMファイルをコピーしてください。
-- make を実行してください。
-- うまくいけば、iP6.html / iP6.data / iP6.js / iP6.wasm ファイルが出来上がります。
-
-## ビルドの方法 [SDL2 版]
-
-- SDL2をインストールしてください。
-- make CC=gcc を実行してください。
-- うまくいけば、実行ファイルの iP6 ファイルが出来上がります。
+$ make で、ビルドできます。
 
 
-## 使い方 [Emscripten 版]
+## 使い方
 
-- ターミナルで、ソースリストのあるディレクトリに移動してください。
-- 下記のワンライナーで、Web サーバーを起動してください。<br>
-  $ ruby -rwebrick -e 'WEBrick::HTTPServer.new(:DocumentRoot => "./", :Port => 8000).start'
-- ブラウザで、http://localhost:8000/iP6.html   にアクセスしてください。
+1. 実行ファイルのあるディレクトリに、rom というディレクトリを作成してください。
+2. 必要なROMファイルを、rom ディレクトリの中にコピーしてください。
+3. ターミナルから、下記のコマンドを打ち込んでください。
 
-## 気をつけること
+$ ./iP6 
 
-Emscripten版は、iP6.data という生成物にROMファイルが含まれてしまっているようです。実機ROMで試すときは、外部サーバーに置かない方がいいと思います。
+で起動できます。
+
+
 
 ## 主なできないこと 
 
-- キー入力できますが、まだ正しく入力できないキーが沢山あります。
-- キー入力が速いと、取りこぼすことがあるようです。
+- キー入力できません。
+- Quitと、About以外のメニューは反応しません。
 - 音楽が鳴りません。
 - 起動中に設定をいじれません。機種変更もできません。
 - その他、iP6 がサポートしていない機能は、使えません。
 
+　一番下以外は、なるべく対応したいです。気長にお待ちください。
+
 ## ライセンス
 
-This software is licensed under Marat Fayzullin's fmsx license.
+This emulator software is licensed under Marat Fayzullin's fmsx license.
 commercial use is prohibited.
+
+The GTK menu program is written by michinari nukazawa.
+THe GTK menu program is licensed under BSD Clause-2.
+
 
 This software has no warranty. The author assumes no responsibility whatsoever for any problems that may arise from using this software.
 
-
-## 試してみた環境 [Emscripten 版]
-
-- Macと、Windowsの Firefox 
-- Macの Safari と、iPhoneのモバイルSafari
-- Microsoft Edge
 
 ## 免責事項
 
@@ -65,3 +59,4 @@ This software has no warranty. The author assumes no responsibility whatsoever f
 
 - エミュレータを作っていただいた、isio さんに感謝します。
 - Marat Fayzullin さんに感謝します。
+- GTK3のメニューのサンプルプログラムを書かれた michinari nukazawa さんに感謝します。

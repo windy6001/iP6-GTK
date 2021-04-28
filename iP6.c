@@ -13,6 +13,7 @@
 #include "P6.h"
 #include "Help.h"
 #include "Xconf.h"
+#include "gtk3.h"
 
 char *Options[]=
 { 
@@ -30,7 +31,7 @@ int main(int argc,char *argv[])
 {
   int N,J;
   TrapBadOps=0;
-  Verbose=1;P6Version=1;PatchLevel=1;
+  Verbose=1;P6Version=0;PatchLevel=1;
 
 #ifdef MITSHM
   UseSHM=1;
@@ -89,7 +90,11 @@ int main(int argc,char *argv[])
     }
 
   if(!InitMachine()) return(1);
-  StartP6();TrashP6();
+  gtkInit(argc,argv);
+  if( StartP6() ) {
+	  OSD_main_loop();
+  }
+  TrashP6();
   TrashMachine();
   return(0);
 }
