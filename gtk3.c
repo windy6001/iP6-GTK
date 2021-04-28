@@ -1,7 +1,6 @@
 //             GTK3
 //
 //  modified by Windy
-//#include "SDL.h"
 #include "P6.h"
 #include "Unix.h"
 #include "gtk3.h"
@@ -14,26 +13,6 @@
 #define M5WIDTH 320
 #define M5HEIGHT 200
 
-
-
-
-// ======================================================================================    
-/*
-
-Modified       by windy
-Date           2021/4/29
-
-
-
-画像を書きかえ続けます。その上、メニューが使えます。
-メニューを触っていても、画像の書き換えは継続します。
-*/
-
-#include <stdio.h>
-#include <gtk/gtk.h>
-#include <gdk/gdkkeysyms.h>
-
-#include <stdio.h>
 
 static cairo_surface_t * surface=NULL;
 
@@ -55,19 +34,6 @@ static gboolean init_drawing_area(GtkWidget *widget , GdkEventConfigure *event, 
 	
 	int n_ch = gdk_pixbuf_get_n_channels( offscreen);
 	int row  = gdk_pixbuf_get_rowstride( offscreen);
-
-	//g_print("n_ch=%d  row=%d \n",n_ch , row);
-	/* guchar *pixels;
-	for(int h =0 ; h< height ; h++)
-		{
-		for(int w=0; w<width ; w++)
-			{
-			 	pixels = gdk_pixbuf_get_pixels(offscreen)+h*row+ w *n_ch;
-				pixels[0] = rand()%255;			// random color pixels
-				pixels[1] = rand()%255;
-				pixels[2] = rand()%255;
-			}
-		}*/
 
 	//surface = cairo_image_surface_create( CAIRO_FORMAT_RGB24 , width ,height);
 	surface = cairo_image_surface_create( CAIRO_FORMAT_ARGB32 , width ,height);
@@ -115,24 +81,13 @@ static gboolean timer_func(GtkWidget *widget)
 
  srand( time(NULL));
 
-  g_print("progress(sec.):%2d\n", cnt++);
+  g_print("progress:%2d\n", cnt++);
 
 	int n_ch = gdk_pixbuf_get_n_channels( offscreen);
 	int row  = gdk_pixbuf_get_rowstride( offscreen);
 
-	g_print("n_ch=%d  row=%d \n",n_ch , row);
+	//g_print("n_ch=%d  row=%d \n",n_ch , row);
 	guchar *pixels;
-
-	/*for(int h =0 ; h< height ; h++)
-		{
-		for(int w=0; w<width ; w++)
-			{
-			 	pixels = gdk_pixbuf_get_pixels(offscreen)+h*row+ w *n_ch;
-				pixels[0] = rand()%255;			// random color pixels
-				pixels[1] = rand()%255;
-				pixels[2] = rand()%255;
-			}
-		} */
 
 	cairo_t *cr = cairo_create(surface);			//  offscreen -> drawing area		
 	gdk_cairo_set_source_pixbuf( cr, offscreen ,0,0);
@@ -313,12 +268,12 @@ GtkWidget *do_menus()
     menuitem = pv_get_menuitem_new_tree_of_help(window);
     gtk_menu_shell_append (GTK_MENU_SHELL (menubar), menuitem);
 
-    button = gtk_button_new_with_label ("kick");
-    g_signal_connect (button, "clicked",
-        G_CALLBACK (cb_kicked), menubar);
-    gtk_box_pack_start (GTK_BOX (box), button, TRUE, TRUE, 0);
+ //   button = gtk_button_new_with_label ("kick");          // 一応、残しておく
+ //   g_signal_connect (button, "clicked",
+ //       G_CALLBACK (cb_kicked), menubar);
+ //   gtk_box_pack_start (GTK_BOX (box), button, TRUE, TRUE, 0);
 
-	da = gtk_drawing_area_new();
+	da = gtk_drawing_area_new();                            // 描画エリア
 	gtk_widget_set_size_request( da, width ,height);
     gtk_box_pack_start( GTK_BOX (box), da , FALSE,TRUE , 0);
 
@@ -362,13 +317,6 @@ void OSD_main_loop(void)
 }
 
 // ======================================================================================
-/*
-SDL_Window *sdlWindow;   // ウインドウ
-SDL_Renderer *sdlRenderer; // レンダラー
-SDL_Texture *sdlTexture;	// テクスチャー
-SDL_Surface * surface;   // サーフェス（オフスクリーン）
-SDL_Palette palet;		// パレット情報
-*/
 
 ColTyp BPal[16],BPal11[4],BPal12[8],BPal13[8],BPal14[4],BPal15[8],BPal53[32];
 
@@ -413,32 +361,14 @@ int SaveCPU=1;
 //int do_install, do_sync;
 int scale = 2;
 
-/** X-related definitions ************************************/
-//#define KeyMask KeyPressMask|KeyReleaseMask
-//#define OtherMask FocusChangeMask|ExposureMask|StructureNotifyMask
-//#define MyEventMask KeyMask|OtherMask
 
 /** Various X-related variables ******************************/
-char *Dispname=NULL;
-//Display *Dsp;
-//Window Wnd;
-//Atom DELETE_WINDOW_atom, WM_PROTOCOLS_atom;
-//Colormap CMap;
-//int CMapIsMine=0;
-//GC DefaultGC;
+//char *Dispname=NULL;
+//byte *XBuf;
 
-//XImage *ximage;
-byte *XBuf;
-
-/* variables related to colors */
-//XVisualInfo VisInfo;
-//long VisInfo_mask=VisualNoMask;
 int bitpix;
 Bool lsbfirst;
 byte Xtab[4];
-//XID white,black;
-
-//ColTyp BPal[16],BPal11[4],BPal12[8],BPal13[8],BPal14[4],BPal15[8],BPal53[32];
 
 int Mapped; /* flags */
 
@@ -473,18 +403,6 @@ void OnBreak(int Arg) { CPURunning=0; }
 
 void unixIdle(void)
 {
-#if 0
-  long csec, cusec;
-  long l;
-  struct timeval tv;
-
-  gettimeofday(&tv, NULL);
-  csec=tv.tv_sec; cusec=tv.tv_usec;
-  l=(1000000.f/60.f)-((csec-psec)*1000000+(cusec-pusec));
-  if(l>0) usleep(l);
-  psec=csec; pusec=cusec;
-  return;
-#endif
 }
 
 /** Screen Mode Handlers [N60/N66][SCREEN MODE] **************/
@@ -532,59 +450,7 @@ int InitMachine(void)
   /*setwidth(wide);*/
   setwidth(scale-1);
 
-#if 0
-  if(Verbose)
-    printf("Initializing SDL drivers:\n    SDL_Init ...");
-
-      if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO|SDL_INIT_TIMER) != 0) {
-        SDL_Log("SDLを初期化できなかった: %s", SDL_GetError());
-        return 1;
-    }
-    printf("Ok\n    SDL_CreateWindow ...");
-    
-
-
-    sdlWindow = SDL_CreateWindow(
-        "iP6 ",                  // ウィンドウのタイトル
-        SDL_WINDOWPOS_UNDEFINED,           // X座標の初期値
-        SDL_WINDOWPOS_UNDEFINED,           // Y座標の初期値
-        Width,                               // 幅のピクセル数
-        Height,                               // 高さのピクセル数
-        SDL_WINDOW_OPENGL                  // フラグ
-    );
-    if (sdlWindow == NULL) {
-        printf("ウィンドウを生成できなかった: %s\n", SDL_GetError());
-        return 0;
-    }
-    printf("Ok\n    SDL_CreateRGBSurface ...");
-    
-
-    surface = SDL_CreateRGBSurface(0, Width, Height, depth,  0,0,0,0);
-    if (surface == NULL) {
-        SDL_Log("CreateRGBSurface 失敗: %s", SDL_GetError());
-        exit(1);
-    }
-
-    XBuf = surface->pixels;		// pixelのアドレスをセット	(VMの描画プログラムで使用)
-    
-    printf("Ok\n    SDL_CreateRenderer ...");
-    sdlRenderer = SDL_CreateRenderer(sdlWindow, -1, SDL_RENDERER_SOFTWARE);	// レンダラー生成
-    if( sdlRenderer == NULL) {
-        SDL_Log("CreateRenderer 失敗: %s", SDL_GetError());
-        exit(1);    	
-    }
-    printf("Ok\n    SDL_CreateTexture ...");
-    sdlTexture = SDL_CreateTexture( sdlRenderer,				// テクスチャー生成
-    													SDL_PIXELFORMAT_ARGB8888,
-    													SDL_TEXTUREACCESS_STREAMING,
-    													Width,Height);
-    if( sdlTexture == NULL) {
-        SDL_Log("CreateTexture 失敗: %s", SDL_GetError());
-        printf("CreateTexture 失敗: %s", SDL_GetError());
-        exit(1);    	
-    }
-#endif    
-    InitColor(screen_num); 		// 色の初期化
+  InitColor(screen_num); 		// 色の初期化
 #if 0
     SDL_LockSurface( surface);
     memset( surface->pixels , 0 , surface->h *surface->pitch);
@@ -592,102 +458,6 @@ int InitMachine(void)
 #endif
   if(Verbose & 1) printf("OK\n");
 
-
-#if 0
-  Dsp=XOpenDisplay(Dispname);
-
-  if(!Dsp) { if(Verbose) printf("FAILED\n");return(0); }
-  if (do_sync) XSynchronize(Dsp, True);
-
-  if (!ChooseVisual()) 
-      return 0;
-  screen_num=VisInfo.screen;  depth=VisInfo.depth;
-  root=RootWindow(Dsp, screen_num);
-
-  if (!ChooseFormat()) 
-      return 0;
-
-  white=XWhitePixel(Dsp,screen_num);
-  black=XBlackPixel(Dsp,screen_num);
-  DefaultGC=DefaultGC(Dsp,screen_num);
-  if ( do_install 
-       ||(VisInfo.visualid != DefaultVisual(Dsp,screen_num)->visualid)) {
-      CMap=XCreateColormap(Dsp, root, VisInfo.visual, AllocNone);
-      CMapIsMine=1;
-  } 
-  else CMap=DefaultColormap(Dsp,screen_num);
-
-  if (Verbose & 1) 
-      printf("  Using %s colormap (0x%lx)\n", 
-	     CMapIsMine?"private":"default", CMap);
-
-  {
-    XSetWindowAttributes wat;
-    
-    if(Verbose & 1) printf("  Opening window...");
-    
-    wat.colormap=CMap;
-    wat.event_mask=MyEventMask;
-    wat.background_pixel=0;
-/*    wat.background_pixmap=None; */
-    wat.border_pixel=0;
-/*    wat.border_pixmap=None; */
-
-    Wnd=XCreateWindow(Dsp,root,0,0,Width+20,Height+20,0,depth,InputOutput,
-		      VisInfo.visual, 
-		      CWColormap|CWEventMask|CWBackPixel|CWBorderPixel, &wat);
-  }
-  strcpy(TitleBuf, Title); /* added */
-  SetWMHints();
-  if(!Wnd) { if(Verbose & 1) printf("FAILED\n");return(0); }
-  if(Verbose & 1) printf("OK\n");
-
-  InitColor(screen_num); 
-
-  XMapRaised(Dsp,Wnd);
-  XClearWindow(Dsp,Wnd);
-
-#ifdef MITSHM
-  if(UseSHM) /* check whether Dsp supports MITSHM */
-    UseSHM=XQueryExtension(Dsp,"MIT-SHM",&ShmOpcode,&K,&L);
-  if(UseSHM)
-  { if(!(UseSHM=TrySHM(depth, screen_num))) /* Dsp might still be remote */ 
-    {
-      if(SHMInfo.shmaddr) shmdt(SHMInfo.shmaddr);
-      if(SHMInfo.shmid>=0) shmctl(SHMInfo.shmid,IPC_RMID,0);
-      if(ximage) XDestroyImage(ximage);
-      if(Verbose & 1) printf("FAILED\n");
-    }
-  } 
-  if (!UseSHM)
-#endif
-
-
-
-    long size;    
-    size=(long)sizeof(byte)*Height*Width*bitpix/8;
-    if(Verbose & 1) printf("  Allocating %ld %s RAM for image...",
-			   (size&0x03ff) ? size : size>>10,
-			   (size&0x03ff) ? "bytes" : "kB");
-    XBuf=(byte *)malloc(size);
-    if(!XBuf) { if(Verbose & 1) printf("FAILED\n");return(0); }
-
-    if(Verbose & 1) printf("OK\n  Creating image...");
-    ximage=XCreateImage(Dsp,VisInfo.visual,depth,
-                        ZPixmap,0,XBuf,Width,Height,8,0);
-    if(!ximage) { if(Verbose & 1) printf("FAILED\n");return(0); }
-
-  if(Verbose & 1) printf("OK\n");
-
-  build_conf();
-#endif
-  {
-#if 0
-    struct timeval tv;
-    gettimeofday(&tv,NULL);
-    psec=tv.tv_sec;pusec=tv.tv_usec;
-#endif
-  }
   return(1);
 }
 
@@ -702,7 +472,7 @@ int InitMachine(void)
 /*************************************************************/
 void Keyboard(void)
 {
-#if 0
+#if 0             // キーボードを使えるようにする時のために、残しておく
   SDL_Event e;
    
   //printf("keyboard ");
@@ -907,13 +677,6 @@ void SetTitle(fpos_t pos)
 /** PUTIMAGE: macro copying image buffer into a window ********/
 void PutImage(void)
 {
-	/*
-    SDL_UpdateTexture(sdlTexture, NULL, surface->pixels, surface->pitch);
-    
-    SDL_RenderClear( sdlRenderer );
-    SDL_RenderCopy( sdlRenderer, sdlTexture, NULL, NULL);
-    SDL_RenderPresent( sdlRenderer ); 
-  */
 }
 
 

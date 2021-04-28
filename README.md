@@ -41,15 +41,7 @@ $ ./iP6
 
 ## ライセンス
 
-This emulator software is licensed under Marat Fayzullin's fmsx license.
-commercial use is prohibited.
-
-The GTK menu program is written by michinari nukazawa.
-THe GTK menu program is licensed under BSD Clause-2.
-
-
-This software has no warranty. The author assumes no responsibility whatsoever for any problems that may arise from using this software.
-
+LICENSE ファイルをみてください。
 
 ## 免責事項
 
