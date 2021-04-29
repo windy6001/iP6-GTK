@@ -10,6 +10,8 @@
 #include <gdk/gdkkeysyms.h>
 
 #include <stdlib.h>
+#include "types.h"
+#include "buffer.h"
 #define M5WIDTH 320
 #define M5HEIGHT 200
 
@@ -53,7 +55,7 @@ static gboolean draw_cb( GtkWidget *widget, cairo_t * cr , gpointer data)
 	cairo_set_source_surface( cr, surface,0,0);
 	cairo_paint(cr);
 
-   printf("draw_cb\n");
+   //printf("draw_cb\n");
 	return FALSE;
 }
 
@@ -81,7 +83,7 @@ static gboolean timer_func(GtkWidget *widget)
 
  srand( time(NULL));
 
-  g_print("progress:%2d\n", cnt++);
+  //g_print("progress:%2d\n", cnt++);
 
 	int n_ch = gdk_pixbuf_get_n_channels( offscreen);
 	int row  = gdk_pixbuf_get_rowstride( offscreen);
@@ -281,6 +283,61 @@ GtkWidget *do_menus()
 return window;
 }
 
+static gboolean signal_key_press (GtkWidget *widget, GdkEventKey *event, gpointer user_data)
+{
+    gint i;
+
+    OSD_EVENT data;
+    data.isPress = TRUE;
+    data.keycode = event->keyval;
+    writeEvent( data);
+
+    g_print ("key_press:keyval=%02X", event->keyval);
+    if (event->state & GDK_SHIFT_MASK)
+        g_print (" Shift");
+    if (event->state & GDK_CONTROL_MASK)
+        g_print (" Ctrl");
+    if (event->state & GDK_MOD1_MASK)
+        g_print (" Alt");
+    g_print (" length=%d", event->length);
+    if (event->length > 0)
+      {
+        for (i = 0; event->string[i] != '\0'; i++)
+            g_print (" %02X", event->string[i]);
+        g_print (" string=%s", event->string);
+      }
+    g_print ("\n");
+
+    return TRUE;
+}
+
+static gboolean signal_key_release (GtkWidget *widget, GdkEventKey *event, gpointer user_data)
+{
+    gint i;
+    //OSD_EVENT data;
+    ///data.isPress = FALSE;
+    //data.keycode = event->keyval;
+    //writeEvent( data);
+
+    g_print ("key_release:keyval=%02X", event->keyval);
+    if (event->state & GDK_SHIFT_MASK)
+        g_print (" Shift");
+    if (event->state & GDK_CONTROL_MASK)
+        g_print (" Ctrl");
+    if (event->state & GDK_MOD1_MASK)
+        g_print (" Alt");
+    g_print (" length=%d", event->length);
+    if (event->length > 0)
+      {
+        for (i = 0; event->string[i] != '\0'; i++)
+            g_print (" %02X", event->string[i]);
+        g_print (" string=%s", event->string);
+      }
+    g_print ("\n");
+
+    return TRUE;
+}
+
 
 // ************** gtkInit ************************************
 // GTKの初期化、終了時のシグナル、再描画のシグナル、タイマーイベントの設定などをして、全てのウィジットを表示する。
@@ -293,6 +350,10 @@ int gtkInit(int argc, char *argv[])
   gtk_init(&argc, &argv);
   window = do_menus();
   g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+  g_signal_connect (G_OBJECT (window), "key-press-event",
+                                        G_CALLBACK (signal_key_press), NULL);
+  g_signal_connect (G_OBJECT (window), "key-release-event",
+                                        G_CALLBACK (signal_key_release), NULL);
 
   // create frame
   GtkWidget *frame = gtk_frame_new(NULL);
@@ -427,6 +488,8 @@ int InitMachine(void)
   int K,L;
   int depth=24 , screen_num;
   //Window root;
+  initEvent();      // イベント初期化
+
   
   SetValidLine( 192);
   SetClock(4*1000000);
@@ -472,6 +535,12 @@ int InitMachine(void)
 /*************************************************************/
 void Keyboard(void)
 {
+  OSD_EVENT data;
+  if( readEvent( &data) ) {
+        KeyIntFlag = INTFLAG_REQ;
+        p6key = data.keycode;
+  }
+
 #if 0             // キーボードを使えるようにする時のために、残しておく
   SDL_Event e;
    

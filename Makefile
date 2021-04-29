@@ -48,7 +48,7 @@ CFLAGS = `pkg-config --cflags gtk+-3.0`  ${DEFINES}
 # --- LDLIBS ---
 LDLIBS  =   `pkg-config --libs gtk+-3.0`
 
-OBJECTS = iP6.o P6.o Z80.o Debug.o Refresh.o Sound.o gtk3.o
+OBJECTS = iP6.o P6.o Z80.o Debug.o Refresh.o Sound.o gtk3.o buffer.o
 
 OUTPUTFILE= iP6
 
@@ -72,3 +72,5 @@ Refresh.o:	Refresh.c Unix.h
 Sound.o:	Sound.c P6.h
 Debug.o:	Debug.c Z80.h
 gtk3.o:	 	gtk3.c gtk3.h
+buffer.o:   buffer.c buffer.h
+

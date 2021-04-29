@@ -13,12 +13,7 @@
 #ifndef Z80_H
 #define Z80_H
 
-#ifndef TRUE
-#define TRUE 1
-#endif
-#ifndef FALSE
-#define FALSE 0
-#endif
+#include "types.h"
 
 #define INTFLAG_NONE	0
 #define INTFLAG_REQ	1
